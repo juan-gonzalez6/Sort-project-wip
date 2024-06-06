@@ -1,0 +1,576 @@
+#include <iostream>		// the library for cout and endl
+#include <stdlib.h>		// the library for system
+#include <time.h>		// the library for clock
+#include <fstream>		// the library for ifstream
+#include <string>		// the library for string
+
+#include <iostream>
+#include <string> // to use strings
+#include <Windows.h>	// sleep command
+#include "ICS_ConsoleHelper.h" //color
+
+using namespace std;	// cout and endl are part of the std namespace
+
+// the max number of values to read from each file for sorting
+const int MAX_NUMBERS = 60000;
+
+// the names of the files to get the data from
+const int FILE_COUNT = 4;
+const string FILE_NAMES[FILE_COUNT] = { "data/RANDOM.txt", "data/DESCENDING.txt", "data/ALMOST_SORTED.txt", "data/ASCENDING.txt" };
+
+/**
+ * Sorts the array in descending order
+ *
+ * @param data		The array to sort.
+ * @param length	The number of elements in the array.
+ */
+template <typename T>
+void bubbleSort(T* data, int length, bool ascending = true)
+{
+	// we have to repeat the algorithm length - 1 times
+	for (int i = 0; i < (length - 1); i++)
+	{
+		// sort the first length - 1 elements,
+		// then the first length - 2 elements,
+		// etc... 
+		// subtract 1 from the length so we don't go out of bounds!
+		for (int j = 0; j < (length - 1) - i; j++)
+		{
+			// check if the sequential elements are out of order and swap if needed
+			if ((!ascending && data[j + 1] > data[j]) || (ascending && data[j + 1] < data[j]))
+			{
+				int temp = data[j];		// save the first
+				data[j] = data[j + 1];	// overwrite the first 
+				data[j + 1] = temp;		// overwrite the second
+			}
+		}
+	}
+}
+
+
+
+
+/**
+ * This recursively sorts the elements of an array using quicksort.
+ *
+ * @param data			The array to be sorted.
+ * @param start			The index of the first element to be sorted.
+ * @param end			The index of the last element to be sorted.
+ * @param ascending		Sorts the array in ascending order if this is true, descending order if it is false.
+ */
+
+template <typename T>
+void quickSort(T* data, int start, int end, bool ascending = true)
+{
+	// if there are less than 2 elements to sort, they are already in the correct order
+	if (start >= end)
+	{
+		return;
+	}
+
+	// select the last array element as the pivot
+	int pivot = end;
+
+	// start by comparing the first array element to the pivot
+	int i = start;
+
+	// repeat until the element to compare is the pivot itself
+	while (i < pivot)
+	{
+		// if this element belongs after the pivot, move it to the right
+		if ((ascending && data[i] > data[pivot]) || (!ascending && data[i] < data[pivot]))
+		{
+			T temp = data[i];				// keep track of the element to go to the right of the pivot
+			data[i] = data[pivot - 1];		// replace the previous element with the one left of the pivot
+			data[pivot - 1] = data[pivot];	// move the pivot to the left by one index
+			data[pivot] = temp;				// place the element being compared to the right of the pivot
+
+			pivot--;						// the pivot has move one index left so update it
+		}
+		else
+		{
+			i++;							// if the element being compared is in the right place, leave it
+		}
+	}
+
+	// quicksort the elements left of the pivot
+	quickSort(data, start, pivot - 1, ascending);
+
+	// quicksort the elements right of the pivot
+	quickSort(data, pivot + 1, end, ascending);
+}
+
+template <typename T>
+void exchangeSort(T* data, int length, bool howSort = true)
+{
+	// Sorting in ascending order
+	if (howSort == true)
+	{
+		for (int i = 0; i < length - 1; i++)
+		{
+			for (int o = i + 1; o < length; o++)
+			{
+				// Swap if the current element is greater than the next one
+				if (data[i] > data[o])
+				{
+					T holder = data[o];
+					data[o] = data[i];
+					data[i] = holder;
+				}
+				// Else, do nothing because the elements are already in the correct order
+			}
+		}
+	}
+	// Sorting in descending order
+	else
+	{
+		for (int i = 0; i < length - 1; i++)
+		{
+			for (int o = 0; o < length - 1; o++)
+			{
+				// Swap if the current element is less than the next one
+				if(data[o] < data[o + 1])
+				{
+					T holder = data[o + 1];
+					data[o + 1] = data[o];
+					data[o] = holder;
+				}
+				// Else, do nothing because the elements are already in the correct order
+			}
+		}
+	}
+}
+
+
+template <typename T>
+void selectionSort(T* data, int length, bool howSort = true)
+{
+	// Iterate through the array except for the last element
+	for (int i = 0; i < length - 1; i++)
+	{
+		int smallestIndex = 0; // Initialize the index of the smallest element to 0
+
+		// If sorting in descending order
+		if (howSort != true)
+		{
+			// Find the index of the smallest element in the unsorted portion
+			for (int o = 1; o < length - i; o++)
+			{
+				if (data[smallestIndex] > data[o])	 // If the smallest index is bigger that any other number on the array then
+				{
+					smallestIndex = o;	 // make the smallest index the current value of 'o' 
+				}
+				else
+				{
+					// do nothing
+				}
+			}
+
+			// Swap the smallest element with the last element of the unsorted portion
+			T holder = data[length - 1 - i];
+			data[length - 1 - i] = data[smallestIndex];
+			data[smallestIndex] = holder;
+		}
+		else // If sorting in ascending order
+		{
+			// Find the index of the largest element in the unsorted portion
+			for (int o = 1; o < length - i; o++)
+			{
+				if (data[smallestIndex] < data[o]) // If the smallest index is less that any other number on the array then
+				{
+					smallestIndex = o;	// make the smallest index the current value of 'o' 
+				}
+				else
+				{
+					// do nothing
+				}
+			}
+
+			// Swap the largest element with the last element of the unsorted portion
+			T holder = data[length - 1 - i];
+			data[length - 1 - i] = data[smallestIndex];
+			data[smallestIndex] = holder;
+		}
+	}
+}
+
+
+template <typename T>
+void insertionSort(T* data, int length, bool howSort = true, int i = 0)
+{
+	// Iterate through the array
+	for (int i = 0; i < length; i++)
+	{
+		T value = data[i]; // Store the current element in a variable
+		int index = i; // Initialize the index to the current position
+
+		// Move elements greater than the current value to the right (for ascending order) or smaller to the right (for descending order)
+		while (index > 0 and ((howSort == true and value < data[index - 1]) or (howSort != true and value > data[index - 1])))
+		{
+			index--; // Move to the left
+		}
+
+		// Shift elements to the right to make space for the current value
+		for (int o = i; o > index; o--)
+		{
+			data[o] = data[o - 1];
+		}
+
+		// Place the current value at the correct position in the sorted section
+		data[index] = value;
+	}
+}
+
+
+template <typename T>
+void binaryInsertionSort(T* data, int length, bool howSort = true, int i = 0)
+{
+	// Iterate through the array
+	for (int i = 0; i < length; i++)
+	{
+		T value = data[i]; // Store the current element in a variable
+
+		int start = 0; // Initialize the start index of the search range
+		int end = i;   // Initialize the end index of the search range
+		int mid = (start + end) / 2; // Calculate the middle index
+
+		// Perform binary search to find the correct position for the current value
+		while (start < end)
+		{
+			mid = (start + end) / 2; // Update the middle index
+
+			// Adjust the search range based on the sorting order
+			if ((howSort == true and value <= data[mid]) or (!howSort and value >= data[mid]))
+			{
+				end = mid; // Update the end index
+			}
+			else
+			{
+				start = mid + 1; // Update the start index
+			}
+		}
+
+		// Shift elements to the right to make space for the current value
+		for (int o = i; o > start; o--)
+		{
+			data[o] = data[o - 1];
+		}
+
+		// Place the current value at the correct position in the sorted section
+		data[start] = value;
+	}
+}
+
+
+template <typename T>
+void combine(T* data, int start, int mid, int end)
+{
+	int i = start; // Initialize index i to the start of the first portion
+	int j = mid;   // Initialize index j to the start of the second portion
+
+	// Continue merging until one of the portions is exhausted
+	while (i != j && j <= end)
+	{
+		// If the element in the first portion is less than or equal to the element in the second portion
+		if (data[i] <= data[j])
+		{
+			i++; // Move to the next element in the first portion
+		}
+		else
+		{
+			// If the element in the second portion is smaller, we need to insert it into the first portion
+			T holder = data[j]; // Store the current element of the second portion
+
+			// Shift elements in the first portion to the right to make space for the new element
+			for (int o = j; o > i; o--)
+			{
+				data[o] = data[o - 1];
+			}
+
+			// Insert the element from the second portion into the correct position in the first portion
+			data[i] = holder;
+
+			i++; // Move to the next element in the first portion
+			j++; // Move to the next element in the second portion
+		}
+	}
+}
+
+
+template <typename T>
+void divide(T* data, int start, int length)
+{
+	// Base case: If the segment contains only one element, return
+	if (start == length)
+	{
+		return;
+	}
+
+	int p = start;          // Start index of the segment
+	int r = length;         // End index of the segment
+	int q = (p + r) / 2;    // Midpoint index of the segment
+
+	// Recursively divide the left half of the segment
+	divide(data, p, q);
+
+	// Recursively divide the right half of the segment
+	divide(data, q + 1, r);
+
+	// Combine (merge) the divided segments
+	combine(data, p, q + 1, r);
+}
+
+
+
+// the program's entry point
+int main()
+{
+
+	{	// loading animation 
+		HWND console = GetConsoleWindow();
+		if (console != NULL) {
+			ShowWindow(console, SW_MAXIMIZE);
+		}
+		std::cout << ICS_YELLOW_TEXT << R"(
+                                                                                
+                                .......                                    
+                          ,*************************,.                          
+                    .,*************************************.                    
+                 *********************************************,                 
+              ,**************************************************,              
+           .********************************************************            
+         ,//**********************************************************.         
+       .*/*********************************************************/*/**        
+      *//////******************************************************/*///*.      
+     *///////**/**********************************************//*/*///////,     
+    */////////*/*************************/*******************//**//////////,    
+   *////////*//////**/***/*********************************/**//*///////////.   
+  .///////////////////////*////******///////////**//////////////*///////////(   
+  //////////////////////*///////*///////**//////*///////////////////////////(.  
+  ((////////////////////////////*///////////////*///////////////////////////(*  
+  (((////////////////////////////////////////////////////////////////////((((*  
+ .(((/(/////////////////////////////////////////////////////////////////(((((*  
+  ((((((((/(///////////////////////////////////////////////////////(/((((((((,  
+  ,(((((((((///////////////////////////////////////////////////////(/((((((((   
+   (((((((((((/((((/(////////////////////////////////////////((//(((((((((((,   
+    ((((((((((((((((((///(((((/////////////////////((/((//((((((((((((((((((    
+     ((((((((((((((((((((((((((((/(//////(/(/(((/(((((((((((((((((((((((((/     
+      (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((*      
+       /((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((        
+         (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((*         
+           (((((((((((((((((((((((((((((((((((((((((((((((((((((((((*           
+             /((((((((((((((((((((((((((((((((((((((((((((((((((((.             
+                /((((((((((((((((((((((((((((((((((((((((((((((,                
+                   *(((((((((((((((((((((((((((((((((((((((/.                   
+                       .*((((((((((((((((((((((((((((((.                        
+                               ,//(#(((((((((((*..                       
+
+					LOADING CODE: {==16.6%==}         
+
+)" << endl;
+
+		Sleep(200);
+		system("cls");
+
+		std::cout << R"(
+
+                                   
+                                                                                                        
+                                      ****                                      
+                          *************************** . .                       
+                     **************************************                     
+                 **********************************************                 
+            . ****************************************************              
+            //****************************************************//            
+          /(    ***************************************************///          
+        *//((    ***************************************************//**        
+      *///////(( *************************************************///////       
+     *///////***************************************************//////////*     
+    ////////////*/********************************************//*//////////*    
+   /////////////////*/***********************************///*///////////////*   
+  *  (///////////////////////*//*******///*****/*////////////////////////////*  
+  /  (///////////////////////////////////////////////////////////////////////*  
+  (  //////////////////////////////////////////////////////////////////////(((  
+ */((/////////////////////////////////////////////////////////////////////((((  
+  (((((/////////////////////////////////////////////////////////////////(((((/  
+  ((((((((///////////////////////////////////////////////////////////((((((((*  
+  /(((((((((((////////////////////////////////////////////////////(((((((((((   
+   ((((((((((((((((//////////////////////////////////////////(((/(((((((((((*   
+   *(((((((((((((((((((((((///////////////////(////(((((((((((((((((((((((((    
+     (((((((((((((((((((((((((((/((((((((((((((((((((((((((((((((((((((((((     
+      /((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((/      
+        ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((        
+         *((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((/         
+          *((((((((((((((((((((((((((((((((((((((((((((((((((((((((((           
+             (((((((((((((((((((((((((((((((((((((((((((((((((((((*             
+               *(((((((((((((((((((((((((((((((((((((((((((((((*                
+                   /((((((((((((((((((((((((((((((((((((((((                    
+                        (((((((((((((((((((((((((((((((*                        
+                              **(((((((((((((((/*               
+					LOADING CODE: {==33%==}
+
+
+)" << endl;
+
+		Sleep(200);
+		system("cls");
+
+		std::cout << R"(
+
+					 *******                                     
+                         /****************************                          
+                    /*************************************(                     
+                 *********************************************/                 
+              ***************************************************/              
+           /***/((  (***********************************************            
+         //////( ((     (/*****************************************/**          
+       (*/*/*****//((      /*****************************************///        
+      ///////*/*******/(((  ***************************************///////      
+     */////////**************************************************//////////     
+    *///////////*//*******************************************//*///*///////    
+   /*/////(/////////**///********************************///*//////////////(/   
+  %////(    (//////////////////*********//*****/*///////////////////////////(   
+  ////(( (   ///////////////////*///////*///////*/////////////////////////////  
+  ((//((     ///////////////////////////////////*//////////////////////////(((  
+  (((//(   (//////////////////////////////////////////////////////////////(((/  
+  (((((////////////////////////////////////////////////////////////////((((((/  
+  ((((((/(//////////////////////////////////////////////////////////(/(/(((((/  
+  /((((((((/((///////////////////////////////////////////////////(/(((((((((((  
+   ((((((((((((((((///(///////////////////////////////////////((/(((((((((((/   
+    ( ((((((((((((((((((((((////////////////////////((((((/(((((((((((((((((    
+     ((  ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((&    
+      (   (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((( /      
+        (   ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((*       
+         /(   (((((((((((((((((((((((((((((((((((((((((((((((((((((((((         
+          %((( ((((((((((((((((((((((((((((((((((((((((((((((((((((((           
+             (((((((((((((((((((((((((((((((((((((((((((((((((((((/             
+               /(((((((((((((((((((((((((((((((((((((((((((((((/&               
+                   (((((((((((((((((((((((((((((((((((((((((/                   
+                       /(((((((((((((((((((((((((((((((/                        
+                               /((((((((((((((((//                
+					LOADING CODE: {==50%==}
+
+)" << endl;
+
+		Sleep(200);
+		system("cls");
+
+		std::cout << R"(
+
+				 /((///(                                     
+                          ***************************/                          
+                     *************************************(                     
+                 *********************************************(                 
+              ***************************************************(              
+           /*/**********(        /**********************************            
+          (************/(             /****************************///          
+        /**/*******************/(        ***************************/*//        
+      *//*//************************/(    *************************////**       
+     *////////***************************************************/////////(     
+    *///////////*//*******************************************//*//////*///(    
+   /////////*////////(////********************************//**/*////////////(   
+  ( (////////////(       /**/*//*////********/***/*//*///////////////////////   
+  ( (////////////        (//////*///***/*////////////////////////////////////   
+  ( ////////////(        (//*///////////////////////////////////////////////((  
+  / /(///////////(       /*/////*/////////////////////////////////////////((((  
+  (((((///////////*///*/////////////////////////////////////////////////(((((   
+  (((((((((////////////////////////////////////////////////////////(/(((/((((   
+  (((((((((((((/////////////////////////////////////////////////////(((((((((   
+   ((((((((((((((((////////////////////////////////////////////((((((((((((((   
+     (        /((((((//(/((((//////////////////////((((((/(((((((((((((((((((   
+    ((           ((((((((((((((((((///////((//((((((((((((((((((((((((((((      
+      (             /(((((((((((((((((((((((((((((((((((((((((((((((((((        
+       (              (((((((((((((((((((((((((((((((((((((((((((((((((((       
+        ((              ((((((((((((((((((((((((((((((((((((((((((((((((         
+           (((((((      ((((((((((((((((((((((((((((((((((((((((((((            
+             ((((((((((((((((((((((((((((((((((((((((((((((((((((               
+               ((((((((((((((((((((((((((((((((((((((((((((((((                 
+                   (((((((((((((((((((((((((((((((((((((((((                    
+                       (( ((((((((((((((((((((((((((((( (                       
+                               ((((((((((((((((((                
+					LOADING CODE: {==66%==}
+
+)" << endl;
+
+		Sleep(200);
+		system("cls");
+
+		std::cout << R"(
+					((((                                       
+                          *,************************,(                          
+                     ,************************************(                     
+                 *********************************************                  
+              *************************************************/*               
+            **(   *******************/         (*******************/            
+                 *********************/              /****************          
+           (***********************************(         *************//        
+      ( ***///***************************************(    *********/////*       
+     //////////***/*********************************************//////*///      
+    ///////////////*******************************************//*//////////     
+   ///////((////////*//************///((//*/**************//*///*///////////    
+   (////     /*//////////////***///        /***//*//////////////////////////(   
+  /////(      ///////////////////(          /*//*////////////////////////////   
+  ((///       ///////////////////(          *//*////////////////////////////(   
+  (((///     //////////////////////        /*///////////////////////////////((  
+  ((((//////////////////////////////**/(**//////////////////////////////(((((   
+  ((((((/(////////////////////////////////////////////////////////////((/((((   
+   (((((((((((////////////////////////////////////////////////////(((((((((((   
+   (((((((((/(/(/(((////////////////////////////////////////((((/(((((((((((    
+    (((((((((((((((         (///////////////////////(((((((((((((((((((((((     
+     (((((((((((                (((((((((((((/(((((((((((((((((((((((((((((     
+      ((((((((                     /(((((((((((((((((((((((((((((((((((((       
+        ((((((                       /((((((((((((((((((((((((((((((((((        
+         ((((((                       ((((((((((((((((((((((((((((((((          
+           ((((((        (             (((((((((((((((((((((((((((((            
+             (((((((((((((((((((((((((((((((((((((((((((((((((((((              
+                (((((((((((((((((((((((((((((((((((((((((((((((                 
+                    (((((((((((((((((((((((((((((((((((((((                     
+                        (((((((((((((((((((((((((((((((                         
+                                  (((((((((((((                
+					LOADING CODE: {==83%==}
+
+)" << endl;
+
+		Sleep(200);
+		system("cls");
+
+		std::cout << R"(
+
+			 /,*************************                           
+                     *************************************                      
+                 *********************************************                  
+              ,**************************************************               
+            *****/*(       /*********************(       **********/            
+          ****/           ************************(           (****//*          
+        */*/      ****************************************        ***//(        
+      ////   //************************************************     *////       
+     */////////*****************************************************//////      
+    */////*/*//////*******************************************//*//////////     
+   (///////**///*///((///*/***********************///(//*****///////////////    
+   ///////////////        *///*/////*////////*/**/       (*//////////////////   
+  (/////////////*         //////////////*//////*/         //////////////////(   
+  /(////////////*         ///////////////////////          ////////////////(/   
+  /((///////////**       *//////////////////////*/        *///////////////(((   
+  ((((((//////////***//////////////////////////////**//**///////////////(((((   
+  ((((((/((//////////////////////////////////////////////////////////((((((((   
+   (((((((((((((//////////////////////////////////////////////////(((((((((((   
+   (((((((((((((/((/////////////////////////////////////////((((((((((((((((    
+    ((((((((((((((((((((((///(//          ((/////////((((((((((((((((((((((     
+     (((((((((((((((((((((((                  ((((((((((((((((((((((((((((      
+      ( ((((((((((((((((((                       ((((((((((((((((((((((((       
+        (((((((((((((((((                         ((((((((((((((((((((((        
+          ((((((((((((((                           (((((((((((((((((((          
+           ((((((((((((((                          (((((((((((((((((            
+              (((((((((((((((((((((((((((((((((((((((((((((((((((               
+                 ((((((((((((((((((((((((((((((((((((((((((((((                 
+                    (((((((((((((((((((((((((((((((((((((((                     
+                         ((((((((((((((((((((((((((((((                         
+                                  (((((((((((                
+					LOADING CODE: {==100%==}
+
+)" << ICS_WHITE_TEXT << endl;
+
+
+		Sleep(350);
+		system("cls");
+	}
